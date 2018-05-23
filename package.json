@@ -1,0 +1,26 @@
+{
+  "name": "weatherbot",
+  "version": "1.0.0",
+  "description": "A chatbot construction assignment for the Feedyou project",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/irgipaulius/Weather-chatbot.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/irgipaulius/Weather-chatbot/issues"
+  },
+  "homepage": "https://github.com/irgipaulius/Weather-chatbot#readme",
+  "dependencies": {
+    "botbuilder": "^3.14.1",
+    "lodash": "^4.17.5",
+    "restify": "^7.1.1",
+    "weather-js": "^2.0.0",
+    "yr.no-forecast": "^2.0.0"
+  }
+}
