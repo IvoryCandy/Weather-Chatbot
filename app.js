@@ -19,8 +19,12 @@
 var express = require('express'); // app server
 var bodyParser = require('body-parser'); // parser for post requests
 var watson = require('watson-developer-cloud'); // watson sdk
+var weather = require('weather-js');
 
 var app = express();
+
+var weatherInfo;
+var today = new Date().getDate();
 
 // Bootstrap application settings
 app.use(express.static('./public')); // load UI from public folder
@@ -62,35 +66,89 @@ app.post('/api/message', function(req, res) {
 });
 
 /**
+/**
  * Updates the response text using the intent confidence
  * @param  {Object} input The request to the Assistant service
  * @param  {Object} response The response from the Assistant service
  * @return {Object}          The response with the updated message
  */
-function updateMessage(input, response) {
+async function updateMessage(input, response) {
   var responseText = null;
+
   if (!response.output) {
     response.output = {};
-  } else {
+    if (response.intents && response.intents[0]) {
+      var intent = response.intents[0];
+      if (intent.confidence >= 0.75) {
+        responseText = 'I understood your intent was ' + intent.intent;
+      } else if (intent.confidence >= 0.5) {
+        responseText = 'I think your intent was ' + intent.intent;
+      } else {
+        responseText = 'I did not understand your intent';
+      }
+    }
+    response.output.text = responseText;
     return response;
-  }
-  if (response.intents && response.intents[0]) {
-    var intent = response.intents[0];
-    // Depending on the confidence of the response the app can return different messages.
-    // The confidence will vary depending on how well the system is trained. The service will always try to assign
-    // a class/intent to the input. If the confidence is low, then it suggests the service is unsure of the
-    // user's intent . In these cases it is usually best to return a disambiguation message
-    // ('I did not understand your intent, please rephrase your question', etc..)
-    if (intent.confidence >= 0.75) {
-      responseText = 'I understood your intent was ' + intent.intent;
-    } else if (intent.confidence >= 0.5) {
-      responseText = 'I think your intent was ' + intent.intent;
-    } else {
-      responseText = 'I did not understand your intent';
+  } else {
+    var responseOutputText = String(response.output.text);
+    var responseContainsRequest = responseOutputText.includes('REQUEST=');
+    if (responseContainsRequest) {  // deal with the request
+      await processRequest(responseOutputText);
+      console.log(weatherInfo);
+      response.output.text = weatherInfo;
+      return response;
+      // }, 1000);
+    } else {  // no request, regular response 
+      return response;
     }
   }
-  response.output.text = responseText;
-  return response;
+}
+
+/**
+ * process the request in the response message
+ * @param {String} responseOutputText the in message
+ * @return {String} 
+ */
+async function processRequest(responseOutputText) {
+  var requestInfo = responseOutputText.split('=')[1].split('|');
+  var forecastingToday = requestInfo[1].split('-')[2] == today;
+  await getWeather(requestInfo, forecastingToday);
+}
+
+/**
+ * get the weather from weather-js lib
+ * @param {String} outputMessage 
+ * @param {object} requestInfo 
+ * @param {boolean} forecastingToday 
+ */
+function getWeather(requestInfo, forecastingToday) {
+  weather.find({search: requestInfo[0], degreeType: 'F' }, function (err, result) {
+    if (err) {
+      console.log(err);
+    }
+
+    if (typeof result[0] !== 'undefined') {  //successfully print weather forecast
+      var current = result[0].current;
+      var forecast = result[0].forecast[0];
+      var location = result[0].location;
+
+      for (var i = 0; i < result[0].forecast.length; i++) {
+        var day = result[0].forecast[i].date.split('-')[2];  //get day token
+        
+        if (day == requestInfo[1]) {  //if the day has been found, remember the array ID in forecast[]
+          forecast = result[0].forecast[i];
+          break;
+        }
+      }
+
+      weatherInfo = 'On ' + forecast.day + ' temperature in ' + location.name +
+        ' is ' + forecast.low + 'F - ' + forecast.high + 'F.\n' +
+        'It will be ' + forecast.skytextday + '.' + 
+        (forecastingToday ? '\nAlso, right now the wind speed is ' + current.winddisplay + '.' : '');
+    } else {  //location unrecognised
+      weatherInfo = "Sorry, but I can't recognize '" + requestInfo[0] + "' as a city.";
+    }
+  });
 }
 
 module.exports = app;
