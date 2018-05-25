@@ -72,7 +72,7 @@ app.post('/api/message', function(req, res) {
  * @param  {Object} response The response from the Assistant service
  * @return {Object}          The response with the updated message
  */
-async function updateMessage(input, response) {
+function updateMessage(input, response) {
   var responseText = null;
 
   if (!response.output) {
@@ -93,7 +93,7 @@ async function updateMessage(input, response) {
     var responseOutputText = String(response.output.text);
     var responseContainsRequest = responseOutputText.includes('REQUEST=');
     if (responseContainsRequest) {  // deal with the request
-      await processRequest(responseOutputText);
+      processRequest(responseOutputText);
       console.log(weatherInfo);
       response.output.text = weatherInfo;
       return response;
@@ -109,10 +109,10 @@ async function updateMessage(input, response) {
  * @param {String} responseOutputText the in message
  * @return {String} 
  */
-async function processRequest(responseOutputText) {
+function processRequest(responseOutputText) {
   var requestInfo = responseOutputText.split('=')[1].split('|');
   var forecastingToday = requestInfo[1].split('-')[2] == today;
-  await getWeather(requestInfo, forecastingToday);
+  getWeather(requestInfo, forecastingToday);
 }
 
 /**
@@ -149,6 +149,7 @@ function getWeather(requestInfo, forecastingToday) {
       weatherInfo = "Sorry, but I can't recognize '" + requestInfo[0] + "' as a city.";
     }
   });
+  console.log(weatherInfo);
 }
 
 module.exports = app;
