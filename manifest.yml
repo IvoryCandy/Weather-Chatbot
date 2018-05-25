@@ -4,12 +4,12 @@ declared-services:
     label: conversation
     plan: free
 applications:
-- name: weather-chatbot-demo
+- name: watson-assistant-simple
   command: npm start
   path: .
   memory: 256M
   instances: 1
   services:
-  - weather-chatbot-demo
+  - my-watson-assistant-service
   env:
     NPM_CONFIG_PRODUCTION: false
