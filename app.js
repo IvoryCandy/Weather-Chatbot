@@ -19,9 +19,8 @@
 const express = require('express'); // app server
 const bodyParser = require('body-parser'); // parser for post requests
 const watson = require('watson-developer-cloud'); // watson sdk
-
+const weather = require('weather-js');
 const app = express();
-const weather = require('./weather');
 
 // Bootstrap application settings
 app.use(express.static('./public')); // load UI from public folder
@@ -101,6 +100,7 @@ function updateMessage(input, response, res) {
   
 }
 
+
 /**
  * process the request in the response message
  * @param {String} responseOutputText the in message
@@ -112,11 +112,53 @@ function processWeatherRequest(responseOutputText, response, res) {
   if (requestInfo[1] == '') {
     requestInfo[1] = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
   }
-  let forecastingToday = requestInfo[1].split('-')[2] == today.getDate();
-  let weatherOutput = weather.getWeather(requestInfo, forecastingToday, response, res);
+  let weatherOutput = getWeather(requestInfo, response, res);
   console.log(weatherOutput);
-  // let locationOutput = weatherOutput[1];
-  // weatherOutput = weatherOutput[0];
+}
+
+
+/**
+ * get the weather information
+ * @param {*} requestInfo the request query
+ * @param {*} response the complete response package
+ * @param {*} res value container
+ */
+function getWeather(requestInfo, response, res) {
+  weather.find({search: requestInfo[0], degreeType: 'F' }, function(err, result) {
+    if (err) {
+      console.log(err);
+    }
+
+    const today = new Date();
+    let weatherInfo;    
+    let forecastingToday = requestInfo[1].split('-')[2] == today.getDate();
+    if (typeof result[0] !== 'undefined') {  //successfully print weather forecast
+      let current = result[0].current;
+      let forecast = result[0].forecast[0];
+      let location = result[0].location;
+      let locationInfo = [location.lat, location.long];
+
+      for (let i = 0; i < result[0].forecast.length; i++) {
+        let day = result[0].forecast[i].date.split('-')[2];  //get day token
+        
+        if (day == requestInfo[1]) {  //if the day has been found, remember the array ID in forecast[]
+          forecast = result[0].forecast[i];
+          break;
+        }
+      }
+
+      weatherInfo = 'On ' + requestInfo[1] + ' temperature in ' + location.name +
+        ' is ' + forecast.low + 'F - ' + forecast.high + 'F.\n' +
+        'It will be ' + forecast.skytextday + '.' + 
+        (forecastingToday ? '\nAlso, right now the wind speed is ' + current.winddisplay + '.' : '');
+    } else {  //location unrecognised
+      weatherInfo = 'Sorry, but I can\'t recognize ' + requestInfo[0] + '\ as a city.';
+    }
+    // console.log(weatherInfo);
+    // return [weatherInfo, locationInfo];
+    response.output.text = weatherInfo;
+    res.json(response);
+  });
 }
 
 module.exports = app;
