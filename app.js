@@ -16,15 +16,12 @@
 
 'use strict';
 
-var express = require('express'); // app server
-var bodyParser = require('body-parser'); // parser for post requests
-var watson = require('watson-developer-cloud'); // watson sdk
-var weather = require('weather-js');
+const express = require('express'); // app server
+const bodyParser = require('body-parser'); // parser for post requests
+const watson = require('watson-developer-cloud'); // watson sdk
 
-var app = express();
-
-var weatherInfo;
-var today = new Date().getDate();
+const app = express();
+const weather = require('./weather');
 
 // Bootstrap application settings
 app.use(express.static('./public')); // load UI from public folder
@@ -46,10 +43,14 @@ app.post('/api/message', function(req, res) {
   if (!workspace || workspace === '<workspace-id>') {
     return res.json({
       'output': {
-        'text': 'The app has not been configured with a <b>WORKSPACE_ID</b> environment variable. Please refer to the ' + '<a href="https://github.com/watson-developer-cloud/assistant-simple">README</a> documentation on how to set this variable. <br>' + 'Once a workspace has been defined the intents may be imported from ' + '<a href="https://github.com/watson-developer-cloud/assistant-simple/blob/master/training/car_workspace.json">here</a> in order to get a working application.'
+        'text': 'The app has not been configured with a <b>WORKSPACE_ID</b> environment variable. Please refer to the ' + 
+        '<a href="https://github.com/watson-developer-cloud/assistant-simple">README</a> documentation on how to set this variable. <br>' + 
+        'Once a workspace has been defined the intents may be imported from ' + 
+        '<a href="https://github.com/watson-developer-cloud/assistant-simple/blob/master/training/car_workspace.json">here</a> in order to get a working application.'
       }
     });
   }
+
   var payload = {
     workspace_id: workspace,
     context: req.body.context || {},
@@ -93,63 +94,14 @@ function updateMessage(input, response) {
     var responseOutputText = String(response.output.text);
     var responseContainsRequest = responseOutputText.includes('REQUEST=');
     if (responseContainsRequest) {  // deal with the request
-      processRequest(responseOutputText);
-      console.log(weatherInfo);
-      response.output.text = weatherInfo;
+      var outMessage = weather.processWeatherRequest(responseOutputText);
+      response.output.text = outMessage;
       return response;
-      // }, 1000);
-    } else {  // no request, regular response 
+    } else {
       return response;
     }
   }
 }
 
-/**
- * process the request in the response message
- * @param {String} responseOutputText the in message
- * @return {String} 
- */
-function processRequest(responseOutputText) {
-  var requestInfo = responseOutputText.split('=')[1].split('|');
-  var forecastingToday = requestInfo[1].split('-')[2] == today;
-  getWeather(requestInfo, forecastingToday);
-}
-
-/**
- * get the weather from weather-js lib
- * @param {String} outputMessage 
- * @param {object} requestInfo 
- * @param {boolean} forecastingToday 
- */
-function getWeather(requestInfo, forecastingToday) {
-  weather.find({search: requestInfo[0], degreeType: 'F' }, function (err, result) {
-    if (err) {
-      console.log(err);
-    }
-
-    if (typeof result[0] !== 'undefined') {  //successfully print weather forecast
-      var current = result[0].current;
-      var forecast = result[0].forecast[0];
-      var location = result[0].location;
-
-      for (var i = 0; i < result[0].forecast.length; i++) {
-        var day = result[0].forecast[i].date.split('-')[2];  //get day token
-        
-        if (day == requestInfo[1]) {  //if the day has been found, remember the array ID in forecast[]
-          forecast = result[0].forecast[i];
-          break;
-        }
-      }
-
-      weatherInfo = 'On ' + forecast.day + ' temperature in ' + location.name +
-        ' is ' + forecast.low + 'F - ' + forecast.high + 'F.\n' +
-        'It will be ' + forecast.skytextday + '.' + 
-        (forecastingToday ? '\nAlso, right now the wind speed is ' + current.winddisplay + '.' : '');
-    } else {  //location unrecognised
-      weatherInfo = "Sorry, but I can't recognize '" + requestInfo[0] + "' as a city.";
-    }
-  });
-  console.log(weatherInfo);
-}
 
 module.exports = app;
