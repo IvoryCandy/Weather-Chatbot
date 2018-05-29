@@ -29,7 +29,7 @@ app.use(bodyParser.json());
 
 // Create the service wrapper
 
-var assistant = new watson.AssistantV1({
+let assistant = new watson.AssistantV1({
   // If unspecified here, the ASSISTANT_USERNAME and ASSISTANT_PASSWORD env properties will be checked
   // After that, the SDK will fall back to the bluemix-provided VCAP_SERVICES environment property
   username: process.env.ASSISTANT_USERNAME || '<username>',
@@ -39,7 +39,7 @@ var assistant = new watson.AssistantV1({
 
 // Endpoint to be call from the client side
 app.post('/api/message', function(req, res) {
-  var workspace = process.env.WORKSPACE_ID || '<workspace-id>';
+  let workspace = process.env.WORKSPACE_ID || '<workspace-id>';
   if (!workspace || workspace === '<workspace-id>') {
     return res.json({
       'output': {
@@ -51,7 +51,7 @@ app.post('/api/message', function(req, res) {
     });
   }
 
-  var payload = {
+  let payload = {
     workspace_id: workspace,
     context: req.body.context || {},
     input: req.body.input || {}
@@ -62,7 +62,7 @@ app.post('/api/message', function(req, res) {
     if (err) {
       return res.status(err.code || 500).json(err);
     }
-    return res.json(updateMessage(payload, data));
+    updateMessage(payload, data, res);
   });
 });
 
@@ -73,13 +73,13 @@ app.post('/api/message', function(req, res) {
  * @param  {Object} response The response from the Assistant service
  * @return {Object}          The response with the updated message
  */
-function updateMessage(input, response) {
-  var responseText = null;
+function updateMessage(input, response, res) {
+  let responseText = null;
 
   if (!response.output) {
     response.output = {};
     if (response.intents && response.intents[0]) {
-      var intent = response.intents[0];
+      let intent = response.intents[0];
       if (intent.confidence >= 0.75) {
         responseText = 'I understood your intent was ' + intent.intent;
       } else if (intent.confidence >= 0.5) {
@@ -89,19 +89,34 @@ function updateMessage(input, response) {
       }
     }
     response.output.text = responseText;
-    return response;
   } else {
-    var responseOutputText = String(response.output.text);
-    var responseContainsRequest = responseOutputText.includes('REQUEST=');
+    let responseOutputText = String(response.output.text);
+    let responseContainsRequest = responseOutputText.includes('REQUEST=');
     if (responseContainsRequest) {  // deal with the request
-      var outMessage = weather.processWeatherRequest(responseOutputText);
-      response.output.text = outMessage;
-      return response;
+      processWeatherRequest(responseOutputText, response, res);
     } else {
-      return response;
+      res.json(response);
     }
   }
+  
 }
 
+/**
+ * process the request in the response message
+ * @param {String} responseOutputText the in message
+ * @return {String} 
+ */
+function processWeatherRequest(responseOutputText, response, res) {
+  const today = new Date();
+  let requestInfo = responseOutputText.split('=')[1].split('|');
+  if (requestInfo[1] == '') {
+    requestInfo[1] = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
+  }
+  let forecastingToday = requestInfo[1].split('-')[2] == today.getDate();
+  let weatherOutput = weather.getWeather(requestInfo, forecastingToday, response, res);
+  console.log(weatherOutput);
+  // let locationOutput = weatherOutput[1];
+  // weatherOutput = weatherOutput[0];
+}
 
 module.exports = app;

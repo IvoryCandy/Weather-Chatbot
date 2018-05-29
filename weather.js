@@ -1,19 +1,6 @@
 'use strict';
 
-var weather = require('weather-js');
-const today = new Date().getDate();
-
-/**
- * process the request in the response message
- * @param {String} responseOutputText the in message
- * @return {String} 
- */
-function processWeatherRequest(responseOutputText) {
-  var requestInfo = responseOutputText.split('=')[1].split('|');
-  var forecastingToday = requestInfo[1].split('-')[2] == today;
-  return getWeather(requestInfo, forecastingToday);
-}
-
+const weather = require('weather-js');
 
 /**
  * get the weather from weather-js lib
@@ -21,20 +8,20 @@ function processWeatherRequest(responseOutputText) {
  * @param {object} requestInfo 
  * @param {boolean} forecastingToday 
  */
-function getWeather(requestInfo, forecastingToday) {
-  weather.find({search: requestInfo[0], degreeType: 'F' }, function (err, result) {
+function getWeather(requestInfo, forecastingToday, response, res) {
+  weather.find({search: requestInfo[0], degreeType: 'F' }, function(err, result) {
     if (err) {
       console.log(err);
     }
-
-    var weatherInfo;
+    let weatherInfo;
     if (typeof result[0] !== 'undefined') {  //successfully print weather forecast
-      var current = result[0].current;
-      var forecast = result[0].forecast[0];
-      var location = result[0].location;
+      let current = result[0].current;
+      let forecast = result[0].forecast[0];
+      let location = result[0].location;
+      let locationInfo = [location.lat, location.long];
 
-      for (var i = 0; i < result[0].forecast.length; i++) {
-        var day = result[0].forecast[i].date.split('-')[2];  //get day token
+      for (let i = 0; i < result[0].forecast.length; i++) {
+        let day = result[0].forecast[i].date.split('-')[2];  //get day token
         
         if (day == requestInfo[1]) {  //if the day has been found, remember the array ID in forecast[]
           forecast = result[0].forecast[i];
@@ -49,11 +36,13 @@ function getWeather(requestInfo, forecastingToday) {
     } else {  //location unrecognised
       weatherInfo = 'Sorry, but I can\'t recognize ' + requestInfo[0] + '\ as a city.';
     }
-    console.log(weatherInfo);
-    return weatherInfo;
+    // console.log(weatherInfo);
+    // return [weatherInfo, locationInfo];
+    response.output.text = weatherInfo;
+    res.json(response);
   });
 }
 
 module.exports = {
-  processWeatherRequest
+  getWeather
 };
