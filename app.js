@@ -136,7 +136,6 @@ function getWeather(requestInfo, response, res) {
       let current = result[0].current;
       let forecast = result[0].forecast[0];
       let location = result[0].location;
-      let locationInfo = [location.lat, location.long];
 
       for (let i = 0; i < result[0].forecast.length; i++) {
         let day = result[0].forecast[i].date.split('-')[2];  //get day token

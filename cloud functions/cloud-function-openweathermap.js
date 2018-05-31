@@ -4,7 +4,7 @@ const today = new Date();
 const requestConfig = {url: 'http://api.openweathermap.org/data/2.5/forecast?q=', 
                        units:'imperial',
                        counts: '10',
-                       appid: 'e78940a376dfa844fc7395b6b17244a2'}
+                       appid: 'e78940a376dfa844fc7395b6b17244a2'};
 
 async function main(params) {
   let query = params.query;
@@ -21,13 +21,11 @@ async function main(params) {
     return Promise.reject({
       statusCode: 500,
       headers: { 'Content-Type': 'application/json' },
-      body: { message: 'Error processing your request' },
+      body: { message: 'Error processing your request' }
     });
   }
   weatherResult.body = JSON.parse(weatherResult.body);
   return weatherResult.body;
-
-
 }
 
 exports.main = main;
