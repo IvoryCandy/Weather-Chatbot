@@ -85,6 +85,7 @@ function xmlToJs(body, callback) {
 }
 
 function processJSON(parsedJSON) {
+  finalJSON = [];
   let weatherLen = parsedJSON.weatherdata.weather.length;
   for (let i = 0; i < weatherLen; i++) {
     if (typeof parsedJSON.weatherdata.weather[i]['A$'] !== 'object')

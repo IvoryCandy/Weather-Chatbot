@@ -112,8 +112,7 @@ function processWeatherRequest(responseOutputText, response, res) {
   if (requestInfo[1] == '') {
     requestInfo[1] = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
   }
-  let weatherOutput = getWeather(requestInfo, response, res);
-  console.log(weatherOutput);
+  getWeather(requestInfo, response, res);
 }
 
 
