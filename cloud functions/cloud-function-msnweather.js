@@ -148,7 +148,7 @@ function generateResponse(queryList, finalJSON) {
         'It will be ' + forecast.skytextday + '.' + 
         (forecastingToday ? '\nAlso, right now the wind speed is ' + current.winddisplay + '.' : '');
   } else {  //location unrecognised
-    weatherInfo = 'Sorry, but I can\'t recognize ' + queryList[0] + '\ as a city.';
+    weatherInfo = 'Sorry, but I can\'t recognize ' + queryList[0] + ' as a city.';
   }
   return {weatherInfo};
 }

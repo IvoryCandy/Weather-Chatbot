@@ -11,7 +11,6 @@ parserOptions:
     jsx: true
   sourceType: module
   ecmaVersion: 2017
-plugins:
 rules:
   no-console:
     - off
