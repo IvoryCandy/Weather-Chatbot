@@ -16,17 +16,17 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "body-parser": "^1.18.2",
-    "dotenv": "^5.0.1",
-    "express": "^4.16.1",
-    "watson-developer-cloud": "^3.2.1",
+    "body-parser": "^1.18.3",
+    "dotenv": "^6.2.0",
+    "express": "^4.16.4",
+    "watson-developer-cloud": "^3.18.0",
     "weather-js": "^2.0.0"
   },
   "devDependencies": {
-    "babel-eslint": "^6.0.4",
+    "babel-eslint": "^10.0.1",
     "casperjs": "^1.1.4",
-    "codecov": "^3.0.2",
-    "eslint": "^2.8.0"
+    "codecov": "^3.1.0",
+    "eslint": "^5.13.0"
   },
   "engines": {
     "node": ">= 6.9.x",
